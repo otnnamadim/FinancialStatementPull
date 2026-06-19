@@ -1,0 +1,102 @@
+import pandas as pd
+import requests
+
+
+def get_company_facts(cik: str, user_agent: str) -> dict:
+    """Fetches the full company facts JSON from the SEC EDGAR API.
+
+    The CIK must be a 10-digit string padded with leading zeros.
+    """
+    # Standardize to 10 digits
+    padded_cik = cik.zfill(10)
+    url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{padded_cik}.json"
+
+    # CRITICAL: The SEC requires a declarative User-Agent header following this exact pattern.
+    # Failing to provide this will result in a 403 Forbidden error.
+    headers = {"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"}
+
+    print(f"Fetching data from: {url}")
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        response.raise_for_status()
+
+
+def extract_metric_to_dataframe(facts_json: dict, concept_name: str) -> pd.DataFrame:
+    """Extracts a specific US-GAAP concept (e.g., 'Assets', 'NetIncomeLoss')
+
+    and flattens the nested JSON structure into a clean Pandas DataFrame.
+    """
+    try:
+        # Access the us-gaap taxonomy branch
+        us_gaap_facts = facts_json["facts"]["us-gaap"]
+
+        if concept_name not in us_gaap_facts:
+            raise KeyError(
+                f"Concept '{concept_name}' not found in this company's facts."
+            )
+
+        metric_data = us_gaap_facts[concept_name]
+
+        # Financial facts are grouped by their unit of measure (e.g., USD, shares)
+        # We'll pull the first available unit key (usually 'USD')
+        unit_key = list(metric_data["units"].keys())[0]
+        facts_list = metric_data["units"][unit_key]
+
+        # Convert the raw list of dictionaries to a DataFrame
+        df = pd.DataFrame(facts_list)
+
+        # Basic cleanup: Keep only major reference columns for structural clarity
+        columns_to_keep = [
+            "form",
+            "fy",
+            "fp",
+            "start",
+            "end",
+            "val",
+            "accn",
+            "frame",
+        ]
+        # Filter for only existing columns to avoid key errors
+        df = df[[col for col in columns_to_keep if col in df.columns]]
+
+        return df
+
+    except KeyError as e:
+        print(f"Error parsing JSON structure: {e}")
+        return pd.DataFrame()
+
+
+# ==========================================
+# Execution Example
+# ==========================================
+if __name__ == "__main__":
+    # 1. Define your connection variables
+    # REPLACE THIS with your actual professional/personal identity details per SEC guidelines
+    MY_USER_AGENT = "YourName AdminContact@yourdomain.com"
+
+    # Example: Vertiv Co. ($VRT) CIK: 0001674101
+    VERTIV_CIK = "0001674101"
+
+    try:
+        # 2. Fetch the payload
+        raw_facts = get_company_facts(VERTIV_CIK, MY_USER_AGENT)
+        print(f"Successfully retrieved facts for: {raw_facts.get('entityName')}\n")
+
+        # 3. Extract specific GAAP line items
+        # Common concepts include: 'Assets', 'NetIncomeLoss', 'Revenues', 'OperatingIncomeLoss'
+        target_concept = "Assets"
+        assets_df = extract_metric_to_dataframe(raw_facts, target_concept)
+
+        if not assets_df.empty:
+            print(f"--- Historical Records for '{target_concept}' (Truncated) ---")
+            # Filter for just the headline annual (10-K) and quarterly (10-Q) records
+            filtered_df = assets_df[assets_df["form"].isin(["10-K", "10-Q"])].tail(
+                15
+            )
+            print(filtered_df.to_string(index=False))
+
+    except Exception as err:
+        print(f"Execution failed: {err}")

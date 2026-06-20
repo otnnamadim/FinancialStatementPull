@@ -1,18 +1,10 @@
 import pandas as pd
 import requests
 
-
 def get_company_facts(cik: str, user_agent: str) -> dict:
-    """Fetches the full company facts JSON from the SEC EDGAR API.
 
-    The CIK must be a 10-digit string padded with leading zeros.
-    """
-    # Standardize to 10 digits
     padded_cik = cik.zfill(10)
     url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{padded_cik}.json"
-
-    # CRITICAL: The SEC requires a declarative User-Agent header following this exact pattern.
-    # Failing to provide this will result in a 403 Forbidden error.
     headers = {"User-Agent": user_agent, "Accept-Encoding": "gzip, deflate"}
 
     print(f"Fetching data from: {url}")
@@ -23,51 +15,90 @@ def get_company_facts(cik: str, user_agent: str) -> dict:
     else:
         response.raise_for_status()
 
+def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFrame:
+     """Extracts 10-K & 10-Q financial statement line items and flattens JSON structure into a Pandas DataFrame."""
 
-def extract_metric_to_dataframe(facts_json: dict, concept_name: str) -> pd.DataFrame:
-    """Extracts a specific US-GAAP concept (e.g., 'Assets', 'NetIncomeLoss')
-
-    and flattens the nested JSON structure into a clean Pandas DataFrame.
-    """
     try:
-        # Access the us-gaap taxonomy branch
-        us_gaap_facts = facts_json["facts"]["us-gaap"]
-
-        if concept_name not in us_gaap_facts:
+        us_gaap_statements = company_json["facts"]["us-gaap"]
+        if fsli_name not in us_gaap_statements:
             raise KeyError(
-                f"Concept '{concept_name}' not found in this company's facts."
+                f"Financial statement line item '{fsli_name}' not found in this company's facts."
             )
 
-        metric_data = us_gaap_facts[concept_name]
+        fsli_data = us_gaap_statements[fsli_name]
+        unit_key = list(fsli_data["units"].keys())[0]
+        financial_statements = fsli_data["units"][unit_key]
+        df = pd.DataFrame(financial_statements)
 
-        # Financial facts are grouped by their unit of measure (e.g., USD, shares)
-        # We'll pull the first available unit key (usually 'USD')
-        unit_key = list(metric_data["units"].keys())[0]
-        facts_list = metric_data["units"][unit_key]
+        # Keep only major reference columns for structural clarity
 
-        # Convert the raw list of dictionaries to a DataFrame
-        df = pd.DataFrame(facts_list)
-
-        # Basic cleanup: Keep only major reference columns for structural clarity
         columns_to_keep = [
-            "form",
-            "fy",
-            "fp",
-            "start",
-            "end",
-            "val",
-            "accn",
-            "frame",
+                "form",
+                "fy",
+                "fp",
+                "start",
+                "end",
+                "val",
+                "accn",
+                "frame",
         ]
-        # Filter for only existing columns to avoid key errors
-        df = df[[col for col in columns_to_keep if col in df.columns]]
+    
+# Filter for only existing columns
 
+        df = df[[col for col in columns_to_keep if col in df.columns]]
         return df
 
     except KeyError as e:
         print(f"Error parsing JSON structure: {e}")
         return pd.DataFrame()
 
+def list_available_gaap_metrics(facts_json: dict) -> pd.DataFrame:
+    """Efficiently extracts all available US-GAAP concepts from the JSON payload
+
+    and returns them as a summary DataFrame.
+    """
+    try:
+        # Step 1: Navigate straight to the US-GAAP dictionary branch
+        us_gaap_facts = facts_json["facts"]["us-gaap"]
+
+        # Step 2: Use a list comprehension to efficiently pull the concept names
+        # and count how many data records live inside their first unit key
+        summary_data = []
+        for concept, details in us_gaap_facts.items():
+            # Get the first unit of measure (e.g., 'USD')
+            first_unit = list(details["units"].keys())[0]
+            # Count how many historical observations exist for this metric
+            record_count = len(details["units"][first_unit])
+
+            summary_data.append(
+                {"GAAP_Concept": concept, "Data_Points_Count": record_count}
+            )
+
+        # Step 3: Convert the lightweight summary list into a DataFrame
+        summary_df = pd.DataFrame(summary_data)
+
+        # Sort alphabetically or by the most heavily reported metrics
+        return summary_df.sort_values(by="GAAP_Concept").reset_index(drop=True)
+
+    except KeyError:
+        print("Could not find standard 'us-gaap' facts for this company.")
+        return pd.DataFrame()
+
+
+
+#AfroTech Investing Watchlist Tickers & CIK Numbers:
+- US Domestic Filers:
+    - Flex Ltd. ($FLEX) - 0000866374
+    - Vertiv ($VRT) - 0001674101
+    - AEHR Test Systems ($AEHR) - 0001040470
+    - Quanta Services Inc. ($PWR) - 0001050915
+
+- Foreign Public Issuers:
+    - FoxConn / Hon Hai Precision Industry Co. - 0001611906
+    - TSMC ($TSM) - 0001046179
+    - GlobalFoundries Systems ($GFS) - 0001709048
+    - STMicroelectronics ($STM) - 0000932787
+    - Infinneon ($IFNNY) - 0001107457
 
 # ==========================================
 # Execution Example

@@ -16,7 +16,7 @@ def get_company_facts(cik: str, user_agent: str) -> dict:
         response.raise_for_status()
 
 def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFrame:
-     """Extracts 10-K & 10-Q financial statement line items and flattens JSON structure into a Pandas DataFrame."""
+    """Extracts 10-K & 10-Q financial statement line items and flattens JSON structure into a Pandas DataFrame."""
 
     try:
         us_gaap_statements = company_json["facts"]["us-gaap"]
@@ -41,9 +41,7 @@ def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFram
                 "val",
                 "accn",
                 "frame",
-        ]
-    
-# Filter for only existing columns
+           ]
 
         df = df[[col for col in columns_to_keep if col in df.columns]]
         return df
@@ -52,82 +50,41 @@ def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFram
         print(f"Error parsing JSON structure: {e}")
         return pd.DataFrame()
 
-def list_available_gaap_metrics(facts_json: dict) -> pd.DataFrame:
-    """Efficiently extracts all available US-GAAP concepts from the JSON payload
-
-    and returns them as a summary DataFrame.
-    """
+def list_available_gaap_metrics(company_json: dict) -> pd.DataFrame:
+ 
     try:
-        # Step 1: Navigate straight to the US-GAAP dictionary branch
-        us_gaap_facts = facts_json["facts"]["us-gaap"]
+        us_gaap_facts = company_json["facts"]["us-gaap"]
 
-        # Step 2: Use a list comprehension to efficiently pull the concept names
-        # and count how many data records live inside their first unit key
         summary_data = []
         for concept, details in us_gaap_facts.items():
-            # Get the first unit of measure (e.g., 'USD')
             first_unit = list(details["units"].keys())[0]
-            # Count how many historical observations exist for this metric
             record_count = len(details["units"][first_unit])
 
             summary_data.append(
                 {"GAAP_Concept": concept, "Data_Points_Count": record_count}
             )
 
-        # Step 3: Convert the lightweight summary list into a DataFrame
-        summary_df = pd.DataFrame(summary_data)
+        fsli_list_df = pd.DataFrame(summary_data)
 
-        # Sort alphabetically or by the most heavily reported metrics
-        return summary_df.sort_values(by="GAAP_Concept").reset_index(drop=True)
+        return fsli_list_df.sort_values(by="GAAP_Concept").reset_index(drop=True)
 
     except KeyError:
         print("Could not find standard 'us-gaap' facts for this company.")
         return pd.DataFrame()
 
-
-
-#AfroTech Investing Watchlist Tickers & CIK Numbers:
-- US Domestic Filers:
-    - Flex Ltd. ($FLEX) - 0000866374
-    - Vertiv ($VRT) - 0001674101
-    - AEHR Test Systems ($AEHR) - 0001040470
-    - Quanta Services Inc. ($PWR) - 0001050915
-
-- Foreign Public Issuers:
-    - FoxConn / Hon Hai Precision Industry Co. - 0001611906
-    - TSMC ($TSM) - 0001046179
-    - GlobalFoundries Systems ($GFS) - 0001709048
-    - STMicroelectronics ($STM) - 0000932787
-    - Infinneon ($IFNNY) - 0001107457
-
-# ==========================================
-# Execution Example
-# ==========================================
-if __name__ == "__main__":
-    # 1. Define your connection variables
-    # REPLACE THIS with your actual professional/personal identity details per SEC guidelines
-    MY_USER_AGENT = "YourName AdminContact@yourdomain.com"
-
-    # Example: Vertiv Co. ($VRT) CIK: 0001674101
-    VERTIV_CIK = "0001674101"
-
-    try:
-        # 2. Fetch the payload
-        raw_facts = get_company_facts(VERTIV_CIK, MY_USER_AGENT)
-        print(f"Successfully retrieved facts for: {raw_facts.get('entityName')}\n")
-
-        # 3. Extract specific GAAP line items
-        # Common concepts include: 'Assets', 'NetIncomeLoss', 'Revenues', 'OperatingIncomeLoss'
-        target_concept = "Assets"
-        assets_df = extract_metric_to_dataframe(raw_facts, target_concept)
-
-        if not assets_df.empty:
-            print(f"--- Historical Records for '{target_concept}' (Truncated) ---")
-            # Filter for just the headline annual (10-K) and quarterly (10-Q) records
-            filtered_df = assets_df[assets_df["form"].isin(["10-K", "10-Q"])].tail(
-                15
-            )
-            print(filtered_df.to_string(index=False))
-
-    except Exception as err:
-        print(f"Execution failed: {err}")
+def afrotech_investment_watchlist() -> pd.DataFrame:
+    watchlist_domestic = [
+        {"category": "domestic", "company_name": "Flex Ltd",     "ticker": "FLEX", "cik": "0000866374"},
+        {"category": "domestic", "company_name": "Vertiv", "ticker": "VRT", "cik": "0001674101"},
+        {"category": "domestic", "company_name": "AEHR Test Systems",    "ticker": "AEHR", "cik": "0001040470"},
+        {"category": "domestic", "company_name": "Quanta Services Inc",    "ticker": "PWR", "cik": "0001050915"},
+    ]
+ 
+    watchlist_fpi = [
+        {"category": "fpi", "company_name": "FoxCon - Hon Hai Precision Industry Co",     "ticker": "HNHPF", "cik": "0001611906"},
+        {"category": "fpi", "company_name": "Taiwan Semiconductor", "ticker": "TSM", "cik": "0001046179"},
+        {"category": "fpi", "company_name": "GlobalFoundries Systems",    "ticker": "GFS", "cik": "0001709048"},
+        {"category": "fpi", "company_name": "STMicroelectronics",    "ticker": "STM", "cik": "0000932787"},
+        {"category": "fpi", "company_name": "Infineon",    "ticker": "IFNNY", "cik": "0001107457"},
+    ]
+    return pd.DataFrame(watchlist_domestic + watchlist_fpi)

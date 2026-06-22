@@ -1,0 +1,33 @@
+If you have Slack (or any other RSS feed reader), you can use these links to monitor each company’s filing. It’s currently only set to filter for Quarter and Annual filings (10-Q & 10-K), but you can also set up an RSS feed for 8-K filings as well which is a material information filing. 
+
+Within Slack, you just paste the link in the section labeled, “Your Feeds”, and the channel will get a push notification when the company files its 10-K/10-Q. I did note that a couple of the companies were foreign public issuers (non-US based companies), so their reports are different and any API you set up to scrape or ingest the financials from the SEC filing would need to be modified for their specific filings. Otherwise, I’ve included the list:
+
+CIK:
+- US Domestic Filers:
+    - Flex Ltd. ($FLEX) - 0000866374
+    - Vertiv ($VRT) - 0001674101
+    - AEHR Test Systems ($AEHR) - 0001040470
+    - Quanta Services Inc. ($PWR) - 0001050915
+
+- Foreign Public Issuers:
+    - FoxConn / Hon Hai Precision Industry Co. - 0001611906
+    - TSMC ($TSM) - 0001046179
+    - GlobalFoundries Systems ($GFS) - 0001709048
+    - STMicroelectronics ($STM) - 0000932787
+    - Infinneon ($IFNNY) - 0001107457
+
+US Domestic Filers:
+- Flex Ltd. ($FLEX) - https://data.sec.gov/rss?cik=0000866374&type=10-K,10-Q,10-KT,10-QT,NT%2010-K,NT%2010-Q,NTN%2010K,NTN%2010Q&count=40
+- Vertiv ($VRT) - https://data.sec.gov/rss?cik=0001674101&type=10-K,10-Q,10-KT,10-QT,NT%2010-K,NT%2010-Q,NTN%2010K,NTN%2010Q&count=40
+- AEHR Test Systems ($AEHR) - https://data.sec.gov/rss?cik=0001040470&type=10-K,10-Q,10-KT,10-QT,NT%2010-K,NT%2010-Q,NTN%2010K,NTN%2010Q&count=40
+- Quanta Services Inc. ($PWR) https://data.sec.gov/rss?cik=0001050915&type=10-K,10-Q,10-KT,10-QT,NT%2010-K,NT%2010-Q,NTN%2010K,NTN%2010Q&count=40
+
+Foreign Public Issuers:
+- FoxConn - [TBD - Hon Hai Precision Industry Co., Ltd., with CIK: 0001611906 ]
+- TSMC ($TSM) : https://data.sec.gov/rss?cik=0001046179&type=3,4,5&exclude=true&count=40
+- GlobalFoundries Systems ($GFS) - https://data.sec.gov/rss?cik=0001709048&type=3,4,5&exclude=true&count=40
+- STMicroelectronics ($STM) - https://data.sec.gov/rss?cik=0000932787&type=3,4,5&exclude=true&count=40
+- Infinneon ($IFNNY) - https://data.sec.gov/rss?cik=0001107457&type=3,4,5&exclude=true&count=40
+
+The link to the Slack instructions are below:
+- https://slack.com/help/articles/218688467-Add-RSS-feeds-to-Slack

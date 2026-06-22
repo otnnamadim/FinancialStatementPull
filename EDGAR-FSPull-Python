@@ -1,3 +1,6 @@
+Disclaimer: The companies detailed herein are not specific investment recommendations. The purpose of this code is to illustrate the functionality of the SEC's Company Fact API in extracting financial information to conduct financial statement analysis.
+
+
 import pandas as pd
 import requests
 

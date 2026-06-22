@@ -30,12 +30,14 @@ def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFram
     """Extracts 10-K & 10-Q financial statement line items and flattens JSON structure into a Pandas DataFrame."""
 
     try:
-       facts - company_json.get("facts",{}) 
+       facts = company_json.get("facts",{}) 
 
         accounting_standard = "us-gaap" if "us-gaap" in facts else "ifrs-full" if "ifrs-full" in facts else None
 
         if not accounting_standard:
             raise KeyError(f" Neither accounting standard found in company facts.")
+
+        statements = facts[accounting_standard]
 
         fsli_data = statements[fsli_name]
         unit_key = list(fsli_data["units"].keys())[0]
@@ -64,25 +66,27 @@ def list_available_gaap_metrics(company_json: dict) -> pd.DataFrame:
  
     try:
         facts = company_json.get("facts",{})
-        accounting_standard = "us-gaap" if "us-gaap" in facts else "ifrs-full" if "ifrs-full"
+        accounting_standard = "us-gaap" if "us-gaap" in facts else "ifrs-full" if "ifrs-full" in facts else None
 
-        if not accounting_stanadard
+        if not accounting_standard:
             print ("Could not find the accounting standard for this company.")
             return pd.DataFrame()
 
         summary_data = []
-        for concept, details in fact [accounting_standard].items(): 
+
+        for concept, details in facts [accounting_standard].items(): 
             first_unit = list(details["units"].keys())[0]
-            record_count - len(details["units"][first_unit])
+            record_count = len(details["units"][first_unit])
 
             summary_data.append(
-                {"Taxonomy": accounting_standard, "concept": concept, "Data_Points_Count": record_count}
+                {"Taxonomy": accounting_standard, "Concept": concept, "Data_Points_Count": record_count}
+            )
 
         fsli_list_df = pd.DataFrame(summary_data)
 
         return fsli_list_df.sort_values(by="Concept").reset_index(drop=True)
 
-    except (KeyError,INDEXERROR):
+    except (KeyError,IndexError):
         return pd.DataFrame()
 
 def afrotech_investment_watchlist() -> pd.DataFrame:

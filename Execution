@@ -1,0 +1,10 @@
+The purpose of this file is to execute the program here and pull the watchlist items.
+
+Refer to the files program here for the watchlist program code:
+
+from EDGAR-FSPull-Python import get_company_facts, extract_fsli_to_dataframe, afrotech_investment_watchlist
+
+USER_Agent = "Your@Email.com"
+
+Watchlist_df = afrotech_investment_watchlist()
+print("Watchlist Loaded")

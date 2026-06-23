@@ -1,19 +1,19 @@
-The purpose of this file is to execute the program here and pull the watchlist items.
+from EDGAR_FSPull_Python import investment_watchlist, get_company_facts, extract_fsli_to_dataframe
 
-from EDGAR_FSPull_Python import afrotech_investment_watchlist, get_company_facts, extract_fsli_to_dataframe
+USER_Agent = "your@email.com"
 
-USER_Agent = "Your@Email.com"
-
-Watchlist_df = afrotech_investment_watchlist()
+Watchlist_df = investment_watchlist()
 print("Watchlist Loaded")
 
 if __name__ == "__main__":
     print("=== STARTING SEC DATA PULL ===")
 
-    watchlist_df = afrotech_investment_watchlist()
+    # 3. Pull and print the watchlist to prove the link works
+    watchlist_df = investment_watchlist()
     print("\n--- Investment Watchlist Loaded ---")
     print(watchlist_df[["category", "company_name", "ticker"]])
 
+    # 4. Pull live financial statement data for Vertiv (VRT)
     print("\n--- Fetching Vertiv (VRT) Live Assets ---")
     vrt_json = get_company_facts("0001674101", USER_Agent)
     vrt_assets = extract_fsli_to_dataframe(vrt_json, "Assets")

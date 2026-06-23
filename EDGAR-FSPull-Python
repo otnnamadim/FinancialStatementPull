@@ -9,7 +9,7 @@ import pandas as pd
 import requests
 
 
-#This line connects with the SEC EDGAR database and defines the company facts as a Pandaas dictionary item. 
+#OTN Note: This section connects to EDGAR via the company facts API by referencing the company CIK number & user agent. Once the API connects, the XBRL data for the stock is stored as a dictionary.
 
 def get_company_facts(cik: str, user_agent: str) -> dict:
 
@@ -27,8 +27,11 @@ def get_company_facts(cik: str, user_agent: str) -> dict:
 
     return data
 
+
+#OTN Note: Extracts the XBRL data from each 10-K, 10-Q, 6-K, and 20-F and stores the result as a dataframe. Annotates IFRS and US GAAP reporting method to ensure accounting standards are clearly delineated for comparability.
+
 def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFrame:
-    """Extracts 10-K & 10-Q financial statement line items and flattens JSON structure into a Pandas DataFrame."""
+
     try:
         facts = company_json.get("facts", {})
 
@@ -56,6 +59,8 @@ def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFram
 
         columns_to_keep = ["form", "fy", "fp", "start", "end", "val", "accn", "frame"]
         df = df[[col for col in columns_to_keep if col in df.columns]]
+        df["accounting_standard"] = accounting_standard
+
         return df
 
     except KeyError as e:
@@ -63,7 +68,9 @@ def extract_fsli_to_dataframe(company_json: dict, fsli_name: str) -> pd.DataFram
         return pd.DataFrame()
 
 
-def list_available_gaap_metrics(company_json: dict) -> pd.DataFrame:
+#OTN Note: Parses the company facts dictionary to list the accounting standard and number of financial statement line items and historical datapoints for each company.
+
+def list_accounting_standard (company_json: dict) -> pd.DataFrame:
     try:
         facts = company_json.get("facts", {})
         accounting_standard = "us-gaap" if "us-gaap" in facts else "ifrs-full" if "ifrs-full" in facts else None
@@ -88,8 +95,9 @@ def list_available_gaap_metrics(company_json: dict) -> pd.DataFrame:
     except (KeyError, IndexError):
         return pd.DataFrame()
 
+#OTN Note: Provides the CIK, company name, Ticker, and SEC Filing category for each company on the investment watchlist.
 
-def afrotech_investment_watchlist() -> pd.DataFrame:
+def investment_watchlist() -> pd.DataFrame:
     watchlist_domestic = [
         {"category": "domestic", "company_name": "Flex Ltd", "ticker": "FLEX", "cik": "0000866374"},
         {"category": "domestic", "company_name": "Vertiv", "ticker": "VRT", "cik": "0001674101"},

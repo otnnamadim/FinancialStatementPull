@@ -9,6 +9,27 @@ import pandas as pd
 import requests
 
 
+#OTN Note: Defines the watchlist first based on the company's CIK, company name, Ticker, and SEC Filing category.
+
+def investment_watchlist() -> pd.DataFrame:
+    watchlist_domestic = [
+        {"category": "domestic", "company_name": "Flex Ltd", "ticker": "FLEX", "cik": "0000866374"},
+        {"category": "domestic", "company_name": "Vertiv", "ticker": "VRT", "cik": "0001674101"},
+        {"category": "domestic", "company_name": "AEHR Test Systems", "ticker": "AEHR", "cik": "0001040470"},
+        {"category": "domestic", "company_name": "Quanta Services Inc", "ticker": "PWR", "cik": "0001050915"},
+    ]
+
+    watchlist_fpi = [
+        {"category": "fpi", "company_name": "FoxCon - Hon Hai Precision Industry Co", "ticker": "HNHPF",
+         "cik": "0001611906"},
+        {"category": "fpi", "company_name": "Taiwan Semiconductor", "ticker": "TSM", "cik": "0001046179"},
+        {"category": "fpi", "company_name": "GlobalFoundries Systems", "ticker": "GFS", "cik": "0001709048"},
+        {"category": "fpi", "company_name": "STMicroelectronics", "ticker": "STM", "cik": "0000932787"},
+        {"category": "fpi", "company_name": "Infineon", "ticker": "IFNNY", "cik": "0001107457"},
+    ]
+    return pd.DataFrame(watchlist_domestic + watchlist_fpi)
+
+
 #OTN Note: This section connects to EDGAR via the company facts API by referencing the company CIK number & user agent. Once the API connects, the XBRL data for the stock is stored as a dictionary.
 
 def get_company_facts(cik: str, user_agent: str) -> dict:
@@ -94,23 +115,3 @@ def list_accounting_standard (company_json: dict) -> pd.DataFrame:
 
     except (KeyError, IndexError):
         return pd.DataFrame()
-
-#OTN Note: Provides the CIK, company name, Ticker, and SEC Filing category for each company on the investment watchlist.
-
-def investment_watchlist() -> pd.DataFrame:
-    watchlist_domestic = [
-        {"category": "domestic", "company_name": "Flex Ltd", "ticker": "FLEX", "cik": "0000866374"},
-        {"category": "domestic", "company_name": "Vertiv", "ticker": "VRT", "cik": "0001674101"},
-        {"category": "domestic", "company_name": "AEHR Test Systems", "ticker": "AEHR", "cik": "0001040470"},
-        {"category": "domestic", "company_name": "Quanta Services Inc", "ticker": "PWR", "cik": "0001050915"},
-    ]
-
-    watchlist_fpi = [
-        {"category": "fpi", "company_name": "FoxCon - Hon Hai Precision Industry Co", "ticker": "HNHPF",
-         "cik": "0001611906"},
-        {"category": "fpi", "company_name": "Taiwan Semiconductor", "ticker": "TSM", "cik": "0001046179"},
-        {"category": "fpi", "company_name": "GlobalFoundries Systems", "ticker": "GFS", "cik": "0001709048"},
-        {"category": "fpi", "company_name": "STMicroelectronics", "ticker": "STM", "cik": "0000932787"},
-        {"category": "fpi", "company_name": "Infineon", "ticker": "IFNNY", "cik": "0001107457"},
-    ]
-    return pd.DataFrame(watchlist_domestic + watchlist_fpi)

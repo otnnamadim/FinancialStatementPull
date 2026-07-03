@@ -1,13 +1,13 @@
 import pandas as pd
 import time
-from EDGAR_FSPull_Python import investment_watchlist, get_company_facts, extract_fsli_to_dataframe
+from EDGAR_Pipeline import investment_watchlist, get_company_facts, extract_fsli_to_dataframe
 
 USER_AGENT = "your@email.com"
-
 
 METRIC_MAPPING = {
     "Total Assets": {"us-gaap": "Assets", "ifrs-full": "Assets"},
     "Total Equity": {"us-gaap": "StockholdersEquity", "ifrs-full": "Equity"},
+    "Liabilities": {"us-gaap": "Liabilities", "ifrs-full": "Liabilities"},
     "Total Income": {"us-gaap": "NetIncomeLoss", "ifrs-full": "ProfitLoss"},
     "Total Revenue": {"us-gaap": "Revenues", "ifrs-full": "Revenue"}
 }
@@ -75,5 +75,9 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"💥 Critical error pulling data for {ticker}: {e}")
 
-    print(watchlist_df[["ticker", "category", "Total Assets", "Total Equity", "Total Income", "Total Revenue"]])
+
+    display_cols = ["ticker", "category", "Total Assets", "Total Equity",
+                    "Total Income", "Total Revenue", "Liabilities"]
+    existing_cols = [c for c in display_cols if c in watchlist_df.columns]
+    print(watchlist_df[existing_cols])
     print("\n=== DATA PULL COMPLETE ===")

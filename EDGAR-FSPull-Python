@@ -20,12 +20,11 @@ def investment_watchlist() -> pd.DataFrame:
     ]
 
     watchlist_fpi = [
-        {"category": "fpi", "company_name": "FoxCon - Hon Hai Precision Industry Co", "ticker": "HNHPF",
-         "cik": "0001611906"},
         {"category": "fpi", "company_name": "Taiwan Semiconductor", "ticker": "TSM", "cik": "0001046179"},
         {"category": "fpi", "company_name": "GlobalFoundries Systems", "ticker": "GFS", "cik": "0001709048"},
-        {"category": "fpi", "company_name": "STMicroelectronics", "ticker": "STM", "cik": "0000932787"},
-        {"category": "fpi", "company_name": "Infineon", "ticker": "IFNNY", "cik": "0001107457"},
+        #{"category": "fpi", "company_name": "STMicroelectronics", "ticker": "STM", "cik": "0000932787"},
+        #{"category": "fpi", "company_name": "Infineon", "ticker": "IFNNY", "cik": "0001107457"},
+        #{"category": "fpi", "company_name": "FoxCon - Hon Hai Precision Industry Co", "ticker": "HNHPF", "cik": "0001611906"},
     ]
     return pd.DataFrame(watchlist_domestic + watchlist_fpi)
 

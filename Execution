@@ -2,14 +2,36 @@ import pandas as pd
 import time
 from EDGAR_Pipeline import investment_watchlist, get_company_facts, extract_fsli_to_dataframe
 
-USER_AGENT = "your@email.com"
+USER_AGENT = "admin@otnnamadim.com"
 
 METRIC_MAPPING = {
-    "Total Assets": {"us-gaap": "Assets", "ifrs-full": "Assets"},
-    "Total Equity": {"us-gaap": "StockholdersEquity", "ifrs-full": "Equity"},
-    "Liabilities": {"us-gaap": "Liabilities", "ifrs-full": "Liabilities"},
-    "Total Income": {"us-gaap": "NetIncomeLoss", "ifrs-full": "ProfitLoss"},
-    "Total Revenue": {"us-gaap": "Revenues", "ifrs-full": "Revenue"}
+    "Total Assets": {
+        "us-gaap": ["Assets"],
+        "ifrs-full": ["Assets"]
+    },
+    "Total Equity": {
+        "us-gaap": ["StockholdersEquity", "EquityAttributableToParent"],
+        "ifrs-full": ["Equity", "EquityAttributableToOwnersOfParent"]
+    },
+    "Liabilities": {
+        "us-gaap": ["Liabilities"],
+        "ifrs-full": ["Liabilities"]
+    },
+    "Total Income": {
+        "us-gaap": ["NetIncomeLoss"],
+        "ifrs-full": ["ProfitLoss"]
+    },
+    "Total Revenue": {
+        "us-gaap": [
+            "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "Revenues",
+            "SalesRevenueNet"
+        ],
+        "ifrs-full": [
+            "Revenue",
+            "RevenueFromContractsWithCustomers"
+        ]
+    }
 }
 
 
@@ -52,28 +74,32 @@ if __name__ == "__main__":
             standard = "us-gaap" if "us-gaap" in facts else "ifrs-full" if "ifrs-full" in facts else None
 
             if not standard:
-                print(f"⚠️ Could not identify standard for {ticker}. Skipping metrics.")
+                print(f" Could not identify standard for {ticker}. Skipping metrics.")
                 continue
 
             # 2. Extract each financial statement line item
-            for metric_name, taxonomy_keys in METRIC_MAPPING.items():
-                fsli_key = taxonomy_keys[standard]
+            for metric_name, taxonomy_dict in METRIC_MAPPING.items():
+                possible_keys = taxonomy_dict.get(standard, [])
+                metric_df = pd.DataFrame()
 
-                # Safely attempt to extract data using your previous function
-                try:
-                    metric_df = extract_fsli_to_dataframe(company_json, fsli_key)
+                for fsli_key in possible_keys:
+                    try:
+                        metric_df = extract_fsli_to_dataframe(company_json, fsli_key)
+                        if not metric_df.empty:
+                            break
+                    except Exception:
+                            continue
+
+                if not metric_df.empty:
                     latest_val = get_latest_value(metric_df)
-
-                    # Update our watchlist DataFrame
                     watchlist_df.at[idx, metric_name] = latest_val
-                except Exception as e:
-                    print(f"   ❌ Failed to parse {metric_name} ({fsli_key}): {e}")
+                else:
+                    print(f"Could not find any metrics for {metric_name} on {ticker}. Skipping metrics.")
 
-            # 3. SEC Compliance Rate Limiting (Max 10 requests/sec)
             time.sleep(0.15)
 
         except Exception as e:
-            print(f"💥 Critical error pulling data for {ticker}: {e}")
+            print(f"Error processing {ticker}: {e}")
 
 
     display_cols = ["ticker", "category", "Total Assets", "Total Equity",

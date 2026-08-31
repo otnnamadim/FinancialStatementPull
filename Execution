@@ -2,7 +2,7 @@ import pandas as pd
 import time
 from EDGAR_Pipeline import investment_watchlist, get_company_facts, extract_fsli_to_dataframe
 
-USER_AGENT = "admin@otnnamadim.com"
+USER_AGENT = "your@email.here"
 
 METRIC_MAPPING = {
     "Total Assets": {
